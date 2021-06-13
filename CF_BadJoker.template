@@ -1,0 +1,652 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Metadata": {
+    "AWS::CloudFormation::Designer": {
+      "c89b8acf-beb7-40b4-9090-9001aa6c1393": {
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "position": {
+          "x": 170,
+          "y": 110
+        },
+        "z": 0,
+        "embeds": [],
+        "dependson": [
+          "8dd76742-2685-4bc3-844a-43ba0f633cda",
+          "17df1922-8261-4abd-8d6b-3252636fbb6a"
+        ]
+      },
+      "8dd76742-2685-4bc3-844a-43ba0f633cda": {
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "position": {
+          "x": 420,
+          "y": 110
+        },
+        "z": 0,
+        "embeds": []
+      },
+      "2c4c0bf6-ffcc-40b9-889d-5260cba999f3": {
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "position": {
+          "x": 420,
+          "y": 180
+        },
+        "z": 0,
+        "embeds": []
+      },
+      "e536e247-ffc7-44cb-bfb8-915185d29aed": {
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "position": {
+          "x": 620,
+          "y": 130
+        },
+        "z": 0,
+        "embeds": [],
+        "dependson": [
+          "2c4c0bf6-ffcc-40b9-889d-5260cba999f3",
+          "8dd76742-2685-4bc3-844a-43ba0f633cda"
+        ]
+      },
+      "0387f46e-6661-4ccf-90f9-a2f48eeada7f": {
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "position": {
+          "x": 560,
+          "y": 270
+        },
+        "z": 0,
+        "embeds": [],
+        "isassociatedwith": [
+          "2c4c0bf6-ffcc-40b9-889d-5260cba999f3"
+        ]
+      },
+      "435cead6-54a2-424b-a2ec-c6e29b96fba4": {
+        "size": {
+          "width": 140,
+          "height": 140
+        },
+        "position": {
+          "x": 730,
+          "y": -20
+        },
+        "z": 0,
+        "embeds": [
+          "983b0891-af2a-44ef-95ba-8ca3a36a15ec"
+        ],
+        "dependson": [
+          "e536e247-ffc7-44cb-bfb8-915185d29aed"
+        ]
+      },
+      "983b0891-af2a-44ef-95ba-8ca3a36a15ec": {
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "position": {
+          "x": 780,
+          "y": 20
+        },
+        "z": 1,
+        "parent": "435cead6-54a2-424b-a2ec-c6e29b96fba4",
+        "embeds": [],
+        "dependson": [
+          "435cead6-54a2-424b-a2ec-c6e29b96fba4"
+        ]
+      },
+      "17df1922-8261-4abd-8d6b-3252636fbb6a": {
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "position": {
+          "x": 30,
+          "y": 190
+        },
+        "z": 0,
+        "embeds": []
+      },
+      "5d2faa57-7770-4763-a6c9-fd55766e7d84": {
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "position": {
+          "x": -20,
+          "y": 10
+        },
+        "z": 0,
+        "embeds": [],
+        "isassociatedwith": [
+          "e536e247-ffc7-44cb-bfb8-915185d29aed"
+        ]
+      },
+      "87fd4f8b-55ef-4e34-b77f-7cbaea76992a": {
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "position": {
+          "x": 360,
+          "y": 280
+        },
+        "z": 0
+      }
+    }
+  },
+  "Resources": {
+    "LFZ86F": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Handler": "index.lambda_handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "lambdaSNS",
+            "Arn"
+          ]
+        },
+        "Code": {
+          "ZipFile": {
+            "Fn::Join": [
+              "",
+              [
+                "import boto3\n",
+                "client = boto3.client('sns')\n",
+                "topic_arn = '",
+                {
+                  "Ref": "subscriber"
+                },
+                "'\n",
+                "def lambda_handler(event, context):\n",
+                "   email = event['body-json']['email']\n",
+                "   resourcePath = event['context']['resource-path']\n\n",
+
+                "   # sub the email to the SNS topic of the resourcePath is /subscribe\n",
+                "   if resourcePath == '/subscribe':\n",
+                "      response = client.subscribe(TopicArn=topic_arn,Protocol='email', Endpoint=email)\n",
+                "      return 'Hello '+ email + '! You are now subscribed to Chuck Bad Joker'\n\n",
+
+                "   # if the resourcePath is unsubscribe, remove the email from the Joker topic\n",
+                "   elif resourcePath == '/unsubscribe':\n\n",
+
+                "      # if email found in subscriptions, set flag to True\n",
+                "      flag = False\n",
+                "      sub_list = client.list_subscriptions()\n",
+                "      for endpoints in sub_list['Subscriptions']:\n",
+                "         if email == endpoints['Endpoint']:\n",
+                "            try:\n",
+                "               client.unsubscribe(SubscriptionArn = endpoints['SubscriptionArn'])\n",
+                "            except:\n",
+                "               return 'Email still pending for confirmation'\n",
+                "            flag = True\n\n",
+
+                "      # if flag is still False, then email doesn't not exist in the subscriptions\n",
+                "      if flag == True:\n",
+                "         return 'Sorry to see you leave ' + email + ':( You are not unsubbed from Chuck Bad Joker'\n",
+                "      else:\n",
+                "         return 'Sorry, this email does not exist in the subscription list'\n"
+
+              ]
+            ]
+          }
+        },
+        "Runtime": "python3.8"
+      },
+      "Metadata": {
+        "AWS::CloudFormation::Designer": {
+          "id": "c89b8acf-beb7-40b4-9090-9001aa6c1393"
+        }
+      },
+      "DependsOn": [
+        "subscriber",
+        "EventChucker"
+      ]
+    },
+    "subscriber": {
+      "Type": "AWS::SNS::Topic",
+      "Properties": {
+        "DisplayName": "subscribes to bad jokes",
+        "TopicName": "subscriber"
+      },
+      "Metadata": {
+        "AWS::CloudFormation::Designer": {
+          "id": "8dd76742-2685-4bc3-844a-43ba0f633cda"
+        }
+      }
+    },
+    "lambdaSNS": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        }
+      },
+      "Metadata": {
+        "AWS::CloudFormation::Designer": {
+          "id": "2c4c0bf6-ffcc-40b9-889d-5260cba999f3"
+        }
+      }
+    },
+    "LF4RC3B": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Handler": "index.lambda_handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "lambdaSNS",
+            "Arn"
+          ]
+        },
+        "Code": {
+          "ZipFile": {
+            "Fn::Join": [
+              "",
+              [
+                "import json\n",
+                "import boto3\n",
+                "import urllib3\n",
+
+                "def lambda_handler(event, context):\n",
+                "   message = {'foo': 'bar'}\n",
+                "   client = boto3.client('sns')\n",
+                "   topic_arn = '",
+                {
+                  "Ref": "subscriber"
+                },
+                "'\n",
+                "   #retreive a bad Chuck Norries Joke\n",
+                "   http = urllib3.PoolManager()\n",
+                "   r = http.request('GET','https://api.chucknorris.io/jokes/random' )\n",
+                "   b = json.loads(r.data.decode('utf-8'))\n",
+
+                "   #Deliver joke to the subscribers\n",
+                "   response = client.publish(TargetArn= topic_arn, Message=json.dumps({'default': json.dumps(b['value'])}), MessageStructure='json')\n",
+
+                "   return b['value']\n"
+              ]
+            ]
+          }
+        },
+        "Runtime": "python3.8"
+      },
+      "Metadata": {
+        "AWS::CloudFormation::Designer": {
+          "id": "e536e247-ffc7-44cb-bfb8-915185d29aed"
+        }
+      },
+      "DependsOn": [
+        "lambdaSNS",
+        "subscriber"
+      ]
+    },
+    "SNSFullAccess": {
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Properties": {
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Action": [
+                "sns:*"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+            }
+          ]
+        },
+        "Roles": [
+          {
+            "Ref": "lambdaSNS"
+          }
+        ]
+      },
+      "Metadata": {
+        "AWS::CloudFormation::Designer": {
+          "id": "0387f46e-6661-4ccf-90f9-a2f48eeada7f"
+        }
+      }
+    },
+    "AGRA3Q5ZT": {
+      "Type": "AWS::ApiGateway::RestApi",
+      "Properties": {
+        "Body": {
+          "swagger": "2.0",
+          "info": {
+            "description": "Sub and Unsub Users",
+            "version": "2021-06-12T03:26:32Z",
+            "title": "subscriber"
+          },
+          "host": "5m5edj1as9.execute-api.us-west-1.amazonaws.com",
+          "basePath": "/test",
+          "schemes": [
+            "https"
+          ],
+          "paths": {
+            "//subscribe": {
+              "post": {
+                "produces": [
+                  "application/json"
+                ],
+                "responses": {
+                  "200": {
+                    "description": "200 response",
+                    "schema": {
+                      "$ref": "#/definitions/Empty"
+                    }
+                  }
+                },
+                "x-amazon-apigateway-integration": {
+                  "httpMethod": "POST",
+                  "credentials": {
+                    "Fn::GetAtt": [
+                      "LambdaExecution",
+                      "Arn"
+                    ]
+                  },
+                  "uri": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:aws:apigateway:",
+                        {
+                          "Ref": "AWS::Region"
+                        },
+                        ":lambda:path/2015-03-31/functions/",
+                        {
+                          "Fn::GetAtt": [
+                            "LFZ86F",
+                            "Arn"
+                          ]
+                        },
+                        "/invocations"
+                      ]
+                    ]
+                  },
+                  "responses": {
+                    "default": {
+                      "statusCode": "200"
+                    }
+                  },
+                  "requestTemplates": {
+                    "application/json": "##  See http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html\n##  This template will pass through all parameters including path, querystring, header, stage variables, and context through to the integration endpoint via the body/payload\n#set($allParams = $input.params())\n{\n\"body-json\" : $input.json('$'),\n\"params\" : {\n#foreach($type in $allParams.keySet())\n    #set($params = $allParams.get($type))\n\"$type\" : {\n    #foreach($paramName in $params.keySet())\n    \"$paramName\" : \"$util.escapeJavaScript($params.get($paramName))\"\n        #if($foreach.hasNext),#end\n    #end\n}\n    #if($foreach.hasNext),#end\n#end\n},\n\"stage-variables\" : {\n#foreach($key in $stageVariables.keySet())\n\"$key\" : \"$util.escapeJavaScript($stageVariables.get($key))\"\n    #if($foreach.hasNext),#end\n#end\n},\n\"context\" : {\n    \"account-id\" : \"$context.identity.accountId\",\n    \"api-id\" : \"$context.apiId\",\n    \"api-key\" : \"$context.identity.apiKey\",\n    \"authorizer-principal-id\" : \"$context.authorizer.principalId\",\n    \"caller\" : \"$context.identity.caller\",\n    \"cognito-authentication-provider\" : \"$context.identity.cognitoAuthenticationProvider\",\n    \"cognito-authentication-type\" : \"$context.identity.cognitoAuthenticationType\",\n    \"cognito-identity-id\" : \"$context.identity.cognitoIdentityId\",\n    \"cognito-identity-pool-id\" : \"$context.identity.cognitoIdentityPoolId\",\n    \"http-method\" : \"$context.httpMethod\",\n    \"stage\" : \"$context.stage\",\n    \"source-ip\" : \"$context.identity.sourceIp\",\n    \"user\" : \"$context.identity.user\",\n    \"user-agent\" : \"$context.identity.userAgent\",\n    \"user-arn\" : \"$context.identity.userArn\",\n    \"request-id\" : \"$context.requestId\",\n    \"resource-id\" : \"$context.resourceId\",\n    \"resource-path\" : \"$context.resourcePath\"\n    }\n}\n"
+                  },
+                  "passthroughBehavior": "when_no_match",
+                  "contentHandling": "CONVERT_TO_TEXT",
+                  "type": "aws"
+                }
+              }
+            },
+            "/unsubscribe": {
+              "post": {
+                "produces": [
+                  "application/json"
+                ],
+                "responses": {
+                  "200": {
+                    "description": "200 response",
+                    "schema": {
+                      "$ref": "#/definitions/Empty"
+                    }
+                  }
+                },
+                "x-amazon-apigateway-integration": {
+                  "credentials": {
+                    "Fn::GetAtt": [
+                      "LambdaExecution",
+                      "Arn"
+                    ]
+                  },
+                  "httpMethod": "POST",
+                  "uri": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:aws:apigateway:",
+                        {
+                          "Ref": "AWS::Region"
+                        },
+                        ":lambda:path/2015-03-31/functions/",
+                        {
+                          "Fn::GetAtt": [
+                            "LFZ86F",
+                            "Arn"
+                          ]
+                        },
+                        "/invocations"
+                      ]
+                    ]
+                  },
+                  "responses": {
+                    "default": {
+                      "statusCode": "200"
+                    }
+                  },
+                  "requestTemplates": {
+                    "application/json": "##  See http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html\n##  This template will pass through all parameters including path, querystring, header, stage variables, and context through to the integration endpoint via the body/payload\n#set($allParams = $input.params())\n{\n\"body-json\" : $input.json('$'),\n\"params\" : {\n#foreach($type in $allParams.keySet())\n    #set($params = $allParams.get($type))\n\"$type\" : {\n    #foreach($paramName in $params.keySet())\n    \"$paramName\" : \"$util.escapeJavaScript($params.get($paramName))\"\n        #if($foreach.hasNext),#end\n    #end\n}\n    #if($foreach.hasNext),#end\n#end\n},\n\"stage-variables\" : {\n#foreach($key in $stageVariables.keySet())\n\"$key\" : \"$util.escapeJavaScript($stageVariables.get($key))\"\n    #if($foreach.hasNext),#end\n#end\n},\n\"context\" : {\n    \"account-id\" : \"$context.identity.accountId\",\n    \"api-id\" : \"$context.apiId\",\n    \"api-key\" : \"$context.identity.apiKey\",\n    \"authorizer-principal-id\" : \"$context.authorizer.principalId\",\n    \"caller\" : \"$context.identity.caller\",\n    \"cognito-authentication-provider\" : \"$context.identity.cognitoAuthenticationProvider\",\n    \"cognito-authentication-type\" : \"$context.identity.cognitoAuthenticationType\",\n    \"cognito-identity-id\" : \"$context.identity.cognitoIdentityId\",\n    \"cognito-identity-pool-id\" : \"$context.identity.cognitoIdentityPoolId\",\n    \"http-method\" : \"$context.httpMethod\",\n    \"stage\" : \"$context.stage\",\n    \"source-ip\" : \"$context.identity.sourceIp\",\n    \"user\" : \"$context.identity.user\",\n    \"user-agent\" : \"$context.identity.userAgent\",\n    \"user-arn\" : \"$context.identity.userArn\",\n    \"request-id\" : \"$context.requestId\",\n    \"resource-id\" : \"$context.resourceId\",\n    \"resource-path\" : \"$context.resourcePath\"\n    }\n}\n"
+                  },
+                  "passthroughBehavior": "when_no_match",
+                  "contentHandling": "CONVERT_TO_TEXT",
+                  "type": "aws"
+                }
+              }
+            }
+          },
+          "definitions": {
+            "Empty": {
+              "type": "object",
+              "title": "Empty Schema"
+            }
+          }
+        }
+      },
+      "Metadata": {
+        "AWS::CloudFormation::Designer": {
+          "id": "435cead6-54a2-424b-a2ec-c6e29b96fba4"
+        }
+      },
+      "DependsOn": [
+        "LF4RC3B"
+      ]
+    },
+    "AGD4CJCW": {
+      "Type": "AWS::ApiGateway::Deployment",
+      "Properties": {
+        "RestApiId": {
+          "Ref": "AGRA3Q5ZT"
+        },
+        "StageName": "test"
+      },
+      "Metadata": {
+        "AWS::CloudFormation::Designer": {
+          "id": "983b0891-af2a-44ef-95ba-8ca3a36a15ec"
+        }
+      },
+      "DependsOn": [
+        "AGRA3Q5ZT"
+      ]
+    },
+    "EventChucker": {
+      "DependsOn": [
+        "LambdaExecution"
+      ],
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Description": "Cloudwatch event rule to trigger joker laambda once a day",
+        "Name": "SendBadJokes",
+        "ScheduleExpression": "rate(24 hours)",
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "LambdaExecution",
+            "Arn"
+          ]
+        },
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "LF4RC3B",
+                "Arn"
+              ]
+            },
+            "Id": "TargetFunctionV1"
+          }
+        ]
+      },
+      "Metadata": {
+        "AWS::CloudFormation::Designer": {
+          "id": "17df1922-8261-4abd-8d6b-3252636fbb6a"
+        }
+      }
+    },
+    "CloudWatchPermissions": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "LF4RC3B",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "EventChucker",
+            "Arn"
+          ]
+        }
+      },
+      "Metadata": {
+        "AWS::CloudFormation::Designer": {
+          "id": "5d2faa57-7770-4763-a6c9-fd55766e7d84"
+        }
+      }
+    },
+    "LambdaExecution": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com",
+                  "apigateway.amazonaws.com",
+                  "events.amazonaws.com"
+
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyName": "root",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                    "logs:CreateLogGroup",
+                    "lambda:InvokeFunction",
+                    "iam:PassRole"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "Metadata": {
+        "AWS::CloudFormation::Designer": {
+          "id": "87fd4f8b-55ef-4e34-b77f-7cbaea76992a"
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "InvokeUrlUnsubscribe": {
+      "Description": "Invokes URL for the API Gateway resouse /unsubscribe",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https//",
+            {
+              "Ref": "AGRA3Q5ZT"
+            },
+            ".execute-api.",
+            {
+              "Ref": "AWS::Region"
+            },
+            ".amazonaws.com",
+            "/test/unsubscribe"
+          ]
+        ]
+      },
+      "Export": {
+        "Name": "InvokeUrlUnsubscribe"
+      }
+    },
+    "InvokeUrlsubscribe": {
+      "Description": "Invokes URL for the API Gateway resouse /subscribe",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https//",
+            {
+              "Ref": "AGRA3Q5ZT"
+            },
+            ".execute-api.",
+            {
+              "Ref": "AWS::Region"
+            },
+            ".amazonaws.com",
+            "/test/subscribe"
+          ]
+        ]
+      },
+      "Export": {
+        "Name": "InvokeUrlsubscribe"
+      }
+    }
+  }
+}
